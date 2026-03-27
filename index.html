@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Claude — Interactive Learning Tool</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; color: #1a1a2e; line-height: 1.6; }
+
+  /* NAV */
+  nav { background: #1a1a2e; color: #fff; padding: 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+  .nav-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; padding: 0 1.5rem; gap: 0; }
+  .nav-logo { font-size: 1.1rem; font-weight: 700; color: #c084fc; padding: 1rem 1.5rem 1rem 0; white-space: nowrap; border-right: 1px solid rgba(255,255,255,0.1); margin-right: 0.5rem; }
+  .nav-tabs { display: flex; overflow-x: auto; gap: 0; flex: 1; }
+  .nav-tabs::-webkit-scrollbar { height: 2px; }
+  .nav-tab { padding: 1rem 1rem; font-size: 0.82rem; font-weight: 500; color: rgba(255,255,255,0.6); cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.2s; }
+  .nav-tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+  .nav-tab.active { color: #c084fc; border-bottom-color: #c084fc; }
+  .progress-bar { height: 3px; background: #c084fc; transition: width 0.4s; }
+
+  /* LAYOUT */
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%); color: #fff; border-radius: 16px; padding: 3rem 2.5rem; margin-bottom: 2rem; text-align: center; }
+  .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .hero h1 span { color: #c084fc; }
+  .hero p { font-size: 1.05rem; color: rgba(255,255,255,0.75); margin-bottom: 1.5rem; max-width: 560px; margin-left: auto; margin-right: auto; }
+  .hero-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+  .hero-stat { text-align: center; }
+  .hero-stat .num { font-size: 1.8rem; font-weight: 800; color: #c084fc; }
+  .hero-stat .lbl { font-size: 0.78rem; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* CARDS */
+  .card { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #e9ecef; }
+  .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: #1a1a2e; }
+  .card p, .card li { font-size: 0.9rem; color: #495057; }
+  .card ul { padding-left: 1.2rem; }
+  .card li { margin-bottom: 0.3rem; }
+
+  /* MODULES GRID */
+  .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .module-card { background: #fff; border-radius: 12px; padding: 1.25rem; border: 2px solid transparent; cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .module-card:hover { border-color: #c084fc; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(192,132,252,0.15); }
+  .module-card.done { border-color: #22c55e; background: #f0fdf4; }
+  .module-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  .module-title { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.25rem; }
+  .module-desc { font-size: 0.8rem; color: #6b7280; }
+  .module-badge { display: inline-block; font-size: 0.68rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; margin-top: 0.5rem; }
+  .badge-beginner { background: #dcfce7; color: #16a34a; }
+  .badge-intermediate { background: #fef9c3; color: #a16207; }
+  .badge-advanced { background: #fee2e2; color: #b91c1c; }
+
+  /* LESSON CONTENT */
+  .lesson-view { display: none; }
+  .lesson-view.active { display: block; }
+  .lesson-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+  .back-btn { background: #f3e8ff; color: #7c3aed; border: none; border-radius: 8px; padding: 0.4rem 1rem; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  .back-btn:hover { background: #e9d5ff; }
+  .lesson-title { font-size: 1.4rem; font-weight: 800; color: #1a1a2e; }
+
+  /* TABS within lesson */
+  .inner-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .inner-tab { padding: 0.4rem 1rem; border-radius: 99px; font-size: 0.82rem; font-weight: 600; cursor: pointer; border: 1.5px solid #e9ecef; background: #fff; color: #6b7280; transition: all 0.2s; }
+  .inner-tab.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+  .inner-tab:hover:not(.active) { border-color: #c084fc; color: #7c3aed; }
+  .inner-content { display: none; }
+  .inner-content.active { display: block; }
+
+  /* PROMPT PLAYGROUND */
+  .playground { background: #f8f6ff; border: 1.5px solid #e9d5ff; border-radius: 12px; padding: 1.5rem; margin: 1rem 0; }
+  .playground h4 { font-size: 0.85rem; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.75rem; }
+  .prompt-box { background: #1a1a2e; color: #a5f3fc; border-radius: 8px; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.6; white-space: pre-wrap; margin-bottom: 0.75rem; }
+  .copy-btn { background: #7c3aed; color: #fff; border: none; border-radius: 6px; padding: 0.35rem 0.9rem; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+  .copy-btn:hover { background: #6d28d9; }
+  .copy-btn.copied { background: #22c55e; }
+
+  /* QUIZ */
+  .quiz-q { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border: 1px solid #e9ecef; }
+  .quiz-q .q-text { font-size: 0.95rem; font-weight: 700; color: #1a1a2e; margin-bottom: 1rem; }
+  .options { display: flex; flex-direction: column; gap: 0.5rem; }
+  .option { padding: 0.65rem 1rem; border-radius: 8px; border: 1.5px solid #e9ecef; cursor: pointer; font-size: 0.87rem; color: #374151; transition: all 0.15s; background: #fff; text-align: left; }
+  .option:hover:not([disabled]) { border-color: #c084fc; background: #faf5ff; }
+  .option.correct { background: #f0fdf4; border-color: #22c55e; color: #15803d; font-weight: 600; }
+  .option.wrong { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
+  .option[disabled] { cursor: not-allowed; }
+  .explanation { margin-top: 0.75rem; padding: 0.75rem; background: #f0f9ff; border-left: 3px solid #0ea5e9; border-radius: 0 8px 8px 0; font-size: 0.85rem; color: #0369a1; display: none; }
+  .quiz-score { text-align: center; padding: 2rem; }
+  .score-circle { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #c084fc); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+  .score-num { font-size: 1.8rem; font-weight: 800; }
+  .score-lbl { font-size: 0.7rem; opacity: 0.85; }
+  .quiz-submit { background: #7c3aed; color: #fff; border: none; border-radius: 8px; padding: 0.65rem 2rem; cursor: pointer; font-size: 0.9rem; font-weight: 700; margin-top: 1rem; width: 100%; }
+  .quiz-submit:hover { background: #6d28d9; }
+
+  /* CHEATSHEET */
+  .cheat-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .cheat-table th { background: #1a1a2e; color: #fff; padding: 0.6rem 0.8rem; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cheat-table td { padding: 0.6rem 0.8rem; border-bottom: 1px solid #e9ecef; vertical-align: top; }
+  .cheat-table tr:hover td { background: #faf5ff; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.72rem; font-weight: 600; }
+  .tag-purple { background: #f3e8ff; color: #7c3aed; }
+  .tag-blue { background: #dbeafe; color: #1d4ed8; }
+  .tag-green { background: #dcfce7; color: #16a34a; }
+  .tag-amber { background: #fef9c3; color: #a16207; }
+
+  /* PROGRESS */
+  .progress-section { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; border: 1px solid #e9ecef; }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .progress-header h3 { font-size: 1rem; font-weight: 700; }
+  .progress-track { height: 8px; background: #e9ecef; border-radius: 99px; overflow: hidden; margin-bottom: 0.25rem; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #c084fc); border-radius: 99px; transition: width 0.5s; }
+  .xp-badge { background: #fef9c3; color: #a16207; border-radius: 99px; padding: 3px 12px; font-size: 0.8rem; font-weight: 700; }
+  .achievement { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: #faf5ff; border-radius: 8px; margin-bottom: 0.5rem; }
+  .ach-icon { font-size: 1.4rem; }
+  .ach-name { font-size: 0.88rem; font-weight: 700; color: #1a1a2e; }
+  .ach-desc { font-size: 0.75rem; color: #6b7280; }
+
+  /* TIPS */
+  .tip-box { border-left: 4px solid #c084fc; background: #faf5ff; border-radius: 0 8px 8px 0; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 0.88rem; color: #374151; }
+  .tip-box strong { color: #7c3aed; }
+
+  /* COMPARISON TABLE */
+  .comp-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 0; border-bottom: 1px solid #e9ecef; }
+  .comp-row:first-child { background: #1a1a2e; color: #fff; border-radius: 10px 10px 0 0; }
+  .comp-cell { padding: 0.6rem 0.8rem; font-size: 0.83rem; }
+  .comp-row:first-child .comp-cell { font-weight: 700; font-size: 0.78rem; color: rgba(255,255,255,0.8); }
+  .comp-row:nth-child(even) { background: #fafafa; }
+  .check { color: #22c55e; font-weight: 700; }
+  .cross { color: #ef4444; }
+  .partial { color: #f59e0b; }
+
+  /* FOOTER */
+  footer { text-align: center; padding: 2rem; font-size: 0.8rem; color: #9ca3af; }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.5rem; }
+    .hero { padding: 2rem 1.25rem; }
+    .comp-row { grid-template-columns: 1fr 1fr; }
+    .comp-row .comp-cell:nth-child(3), .comp-row .comp-cell:nth-child(4) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">🤖 Master Claude</div>
+    <div class="nav-tabs">
+      <div class="nav-tab active" onclick="showSection('home')">Home</div>
+      <div class="nav-tab" onclick="showSection('modules')">Modules</div>
+      <div class="nav-tab" onclick="showSection('prompts')">Prompt Lab</div>
+      <div class="nav-tab" onclick="showSection('cheatsheet')">Cheat Sheet</div>
+      <div class="nav-tab" onclick="showSection('quiz')">Quiz</div>
+      <div class="nav-tab" onclick="showSection('progress')">Progress</div>
+    </div>
+  </div>
+  <div class="progress-bar" id="global-progress" style="width: 5%;"></div>
+</nav>
+
+<!-- HOME -->
+<div id="home" class="section active">
+  <div class="container">
+    <div class="hero">
+      <h1>Master <span>Claude AI</span> — From Zero to Pro</h1>
+      <p>A complete, structured learning journey to help you understand, prompt, and leverage Claude effectively for work, study, and creativity.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="num">8</div><div class="lbl">Modules</div></div>
+        <div class="hero-stat"><div class="num">40+</div><div class="lbl">Techniques</div></div>
+        <div class="hero-stat"><div class="num">30+</div><div class="lbl">Real Prompts</div></div>
+        <div class="hero-stat"><div class="num">3</div><div class="lbl">Skill Levels</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>🎯 What is Claude?</h3>
+      <p>Claude is an AI assistant made by <strong>Anthropic</strong>, designed to be helpful, harmless, and honest. Unlike a simple chatbot, Claude can reason, write, code, analyse, roleplay, and learn within a conversation. Mastering Claude means knowing <em>how to talk to it</em> — the art of prompting.</p>
+    </div>
+
+    <div class="card">
+      <h3>🗺️ Your Learning Path</h3>
+      <ul>
+        <li><strong>Beginner</strong> → Understand what Claude is, its capabilities, and how to write basic prompts</li>
+        <li><strong>Intermediate</strong> → Learn prompt engineering: roles, context, formatting, personas</li>
+        <li><strong>Advanced</strong> → Chain prompts, use system prompts, build workflows, and go agentic</li>
+      </ul>
+      <br>
+      <button class="quiz-submit" style="width: auto; padding: 0.65rem 2rem;" onclick="showSection('modules')">Start Learning →</button>
+    </div>
+
+    <div class="card">
+      <h3>💡 Why This Matters</h3>
+      <p style="margin-bottom:0.75rem;">The difference between a beginner and an expert Claude user isn't intelligence — it's <strong>knowing how to prompt</strong>. Studies show well-structured prompts produce outputs 5–10× more useful than vague ones.</p>
+      <div class="tip-box"><strong>Pro tip:</strong> Think of Claude like a brilliant colleague. The more context, clarity, and constraints you give them, the better the output.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODULES -->
+<div id="modules" class="section">
+  <div class="container">
+    <div id="modules-list">
+      <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem;">Learning Modules</h2>
+      <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem;">Click any module to open it. Complete all tabs to mark it done.</p>
+      <div class="modules-grid" id="module-grid"></div>
+    </div>
+    <div id="lesson-container"></div>
+  </div>
+</div>
+
+<!-- PROMPT LAB -->
+<div id="prompts" class="section">
+  <div class="container">
+    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">🧪 Prompt Lab</h2>
+    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem;">Real, tested prompts you can copy and use immediately. Organised by use case.</p>
+    <div id="prompt-lab-content"></div>
+  </div>
+</div>
+
+<!-- CHEATSHEET -->
+<div id="cheatsheet" class="section">
+  <div class="container">
+    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">📋 Cheat Sheet</h2>
+    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem;">Quick-reference for all key prompting techniques, patterns, and model comparisons.</p>
+    <div id="cheatsheet-content"></div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="section">
+  <div class="container">
+    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">🧠 Knowledge Quiz</h2>
+    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem;">Test your understanding of Claude and prompt engineering. 12 questions across all levels.</p>
+    <div id="quiz-content"></div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div id="progress" class="section">
+  <div class="container">
+    <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">📊 Your Progress</h2>
+    <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 1.5rem;">Track your learning journey and unlock achievements.</p>
+    <div id="progress-content"></div>
+  </div>
+</div>
+
+<footer>Master Claude Learning Tool &nbsp;|&nbsp; Built for learners who want to get serious about AI &nbsp;|&nbsp; Share this with anyone learning Claude 🚀</footer>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const MODULES = [
+  {
+    id: 'what-is-claude',
+    icon: '🤖',
+    title: 'What is Claude?',
+    desc: 'Meet Claude, understand its origins, values, and capabilities',
+    level: 'beginner',
+    tabs: [
+      { name: 'Overview', content: `
+        <div class="card">
+          <h3>Claude at a Glance</h3>
+          <p>Claude is a large language model (LLM) created by <strong>Anthropic</strong>, founded in 2021. It's designed around three core principles: <strong>Helpful, Harmless, Honest</strong> (HHH).</p>
+          <br>
+          <ul>
+            <li><strong>Helpful</strong> — Claude genuinely tries to assist you, not just produce text</li>
+            <li><strong>Harmless</strong> — It won't help with things that cause real harm</li>
+            <li><strong>Honest</strong> — It acknowledges uncertainty and won't fabricate facts</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Claude vs. ChatGPT vs. Gemini</h3>
+          <div style="border-radius:10px; overflow:hidden; border:1px solid #e9ecef;">
+            <div class="comp-row"><div class="comp-cell">Feature</div><div class="comp-cell">Claude</div><div class="comp-cell">ChatGPT</div><div class="comp-cell">Gemini</div></div>
+            <div class="comp-row"><div class="comp-cell">Long documents</div><div class="comp-cell"><span class="check">✔ 200K</span></div><div class="comp-cell"><span class="partial">~ 128K</span></div><div class="comp-cell"><span class="check">✔ 1M</span></div></div>
+            <div class="comp-row"><div class="comp-cell">Reasoning</div><div class="comp-cell"><span class="check">✔ Strong</span></div><div class="comp-cell"><span class="check">✔ Strong</span></div><div class="comp-cell"><span class="partial">~ Good</span></div></div>
+            <div class="comp-row"><div class="comp-cell">Writing quality</div><div class="comp-cell"><span class="check">✔ Excellent</span></div><div class="comp-cell"><span class="partial">~ Good</span></div><div class="comp-cell"><span class="partial">~ Good</span></div></div>
+            <div class="comp-row"><div class="comp-cell">Safety focus</div><div class="comp-cell"><span class="check">✔ Very High</span></div><div class="comp-cell"><span class="partial">~ Medium</span></div><div class="comp-cell"><span class="partial">~ Medium</span></div></div>
+            <div class="comp-row"><div class="comp-cell">Code generation</div><div class="comp-cell"><span class="check">✔ Excellent</span></div><div class="comp-cell"><span class="check">✔ Excellent</span></div><div class="comp-cell"><span class="partial">~ Good</span></div></div>
+          </div>
+        </div>
+        <div class="tip-box"><strong>Key insight:</strong> Claude excels at nuanced writing, long-document analysis, and following complex instructions. It's particularly strong at maintaining context over long conversations.</div>
+      `},
+      { name: 'Model Family', content: `
+        <div class="card">
+          <h3>The Claude Model Family (2025)</h3>
+          <p style="margin-bottom:1rem;">Anthropic releases Claude in three tiers designed for different use cases and budgets:</p>
+          <div style="display:grid; gap:1rem;">
+            <div style="border-left:4px solid #7c3aed; padding-left:1rem;">
+              <strong>Claude Opus</strong> — Most powerful. Best for complex analysis, research, multi-step reasoning. Slower and more expensive.
+            </div>
+            <div style="border-left:4px solid #0ea5e9; padding-left:1rem;">
+              <strong>Claude Sonnet</strong> — Balanced. Best for everyday tasks, writing, coding. Fast and cost-effective. <em>This is most users' go-to.</em>
+            </div>
+            <div style="border-left:4px solid #22c55e; padding-left:1rem;">
+              <strong>Claude Haiku</strong> — Fastest and cheapest. Best for simple Q&A, summarisation, quick lookups.
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Context Window — Why It Matters</h3>
+          <p>Claude can hold up to <strong>200,000 tokens</strong> in memory per conversation (~150,000 words — about 3 novels). This means you can paste entire PDFs, codebases, or research papers and ask questions about them.</p>
+          <div class="tip-box"><strong>Practical use:</strong> Paste a full job description + your CV and ask Claude to tailor your application letter. It reads everything.</div>
+        </div>
+      `},
+      { name: 'Key Terms', content: `
+        <div class="card">
+          <h3>Glossary of Key Terms</h3>
+          <table class="cheat-table">
+            <tr><th>Term</th><th>Meaning</th></tr>
+            <tr><td><strong>Token</strong></td><td>A word fragment. ~1 word = 1.3 tokens. Defines how much Claude can read/write.</td></tr>
+            <tr><td><strong>Context window</strong></td><td>The "working memory" of a conversation. Everything Claude can see at once.</td></tr>
+            <tr><td><strong>Prompt</strong></td><td>The message or instruction you give Claude.</td></tr>
+            <tr><td><strong>System prompt</strong></td><td>Hidden instructions set before the conversation begins (used by developers).</td></tr>
+            <tr><td><strong>Temperature</strong></td><td>Controls creativity/randomness. Low = precise, High = creative.</td></tr>
+            <tr><td><strong>Hallucination</strong></td><td>When Claude invents facts confidently. Always verify important claims.</td></tr>
+            <tr><td><strong>Fine-tuning</strong></td><td>Training a model on specific data to specialise its behaviour.</td></tr>
+            <tr><td><strong>RAG</strong></td><td>Retrieval-Augmented Generation — giving Claude access to external databases.</td></tr>
+            <tr><td><strong>API</strong></td><td>The interface developers use to call Claude programmatically.</td></tr>
+            <tr><td><strong>Constitutional AI</strong></td><td>Anthropic's method for training Claude to be helpful and harmless.</td></tr>
+          </table>
+        </div>
+      `}
+    ]
+  },
+  {
+    id: 'basic-prompting',
+    icon: '💬',
+    title: 'Basic Prompting',
+    desc: 'Write your first great prompts — clarity, context, and intent',
+    level: 'beginner',
+    tabs: [
+      { name: 'The Basics', content: `
+        <div class="card">
+          <h3>The Golden Rule of Prompting</h3>
+          <p>A great prompt answers three questions:</p>
+          <ul style="margin-top:0.5rem;">
+            <li><strong>What</strong> do you want? (the task)</li>
+            <li><strong>Who</strong> are you / who is the audience?</li>
+            <li><strong>How</strong> should it be formatted / constrained?</li>
+          </ul>
+          <div class="tip-box"><strong>Bad:</strong> "Write about marketing"<br><strong>Good:</strong> "Write a 200-word Instagram caption for a Dubai-based luxury perfume brand targeting women aged 25–40. Tone: elegant, aspirational. Include one call to action."</div>
+        </div>
+        <div class="card">
+          <h3>Prompt Anatomy</h3>
+          <p>Every great prompt contains some or all of these elements:</p>
+          <ul style="margin-top:0.5rem;">
+            <li>🎭 <strong>Role</strong> — "You are an expert…"</li>
+            <li>📋 <strong>Task</strong> — What to do</li>
+            <li>📁 <strong>Context</strong> — Background information</li>
+            <li>📐 <strong>Format</strong> — How to present the output</li>
+            <li>🚫 <strong>Constraints</strong> — What to avoid</li>
+            <li>📣 <strong>Tone</strong> — Voice and style</li>
+          </ul>
+        </div>
+      `},
+      { name: 'Examples', content: `
+        <div class="playground">
+          <h4>✏️ Weak vs. Strong Prompt</h4>
+          <p style="font-size:0.85rem; color:#6b7280; margin-bottom:0.75rem;">Weak prompt:</p>
+          <div class="prompt-box">Summarise this article.</div>
+          <p style="font-size:0.85rem; color:#6b7280; margin-bottom:0.75rem;">Strong prompt:</p>
+          <div class="prompt-box">Summarise the following article in 5 bullet points. Each bullet should be one sentence max. Focus on business implications. The audience is non-technical executives.
+
+[Paste article here]</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'Summarise the following article in 5 bullet points. Each bullet should be one sentence max. Focus on business implications. The audience is non-technical executives.')">Copy Strong Prompt</button>
+        </div>
+        <div class="playground">
+          <h4>📧 Email Writing</h4>
+          <div class="prompt-box">You are a professional business communication expert.
+
+Write a follow-up email to a potential client who attended our product demo 3 days ago but hasn't responded.
+
+Context: They showed interest in our HR software. Their company has 200 employees. The demo went well.
+
+Tone: Warm but professional. Not pushy.
+Length: Under 150 words.
+Include: One specific benefit we discussed (flexible pricing).</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'You are a professional business communication expert.\n\nWrite a follow-up email to a potential client who attended our product demo 3 days ago but hasn\'t responded.\n\nContext: They showed interest in our HR software. Their company has 200 employees. The demo went well.\n\nTone: Warm but professional. Not pushy.\nLength: Under 150 words.\nInclude: One specific benefit we discussed (flexible pricing).')">Copy Prompt</button>
+        </div>
+      `},
+      { name: 'Practice', content: `
+        <div class="card">
+          <h3>🏋️ Practice Challenges</h3>
+          <p style="margin-bottom:1rem;">Try writing prompts for each of these. Click the hint if you're stuck.</p>
+        </div>
+        <div class="card">
+          <p><strong>Challenge 1:</strong> Ask Claude to explain a concept from your field to a 10-year-old.</p>
+          <div class="tip-box" style="margin-top:0.5rem;"><strong>Hint:</strong> Include the concept, specify "explain to a 10-year-old", and ask for a relatable analogy.</div>
+        </div>
+        <div class="card">
+          <p><strong>Challenge 2:</strong> Ask Claude to critique something you wrote (a message, plan, or idea).</p>
+          <div class="tip-box" style="margin-top:0.5rem;"><strong>Hint:</strong> Paste the text, ask for 3 strengths and 3 weaknesses, and specify the criteria (clarity, logic, persuasion).</div>
+        </div>
+        <div class="card">
+          <p><strong>Challenge 3:</strong> Ask Claude to roleplay as a job interviewer for your dream role.</p>
+          <div class="tip-box" style="margin-top:0.5rem;"><strong>Hint:</strong> Give the job title, company type, and ask it to ask you questions one at a time and give feedback after each answer.</div>
+        </div>
+      `}
+    ]
+  },
+  {
+    id: 'prompt-engineering',
+    icon: '⚙️',
+    title: 'Prompt Engineering',
+    desc: 'Advanced techniques: roles, chain-of-thought, few-shot, personas',
+    level: 'intermediate',
+    tabs: [
+      { name: 'Techniques', content: `
+        <div class="card">
+          <h3>1. Role Prompting</h3>
+          <p>Assigning Claude a role activates specialised knowledge and tone.</p>
+          <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">"You are a senior marketing strategist with 15 years of experience in B2B SaaS..."</div>
+        </div>
+        <div class="card">
+          <h3>2. Chain-of-Thought (CoT)</h3>
+          <p>Ask Claude to think step-by-step before answering. Dramatically improves reasoning quality.</p>
+          <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">"Before answering, think through this step by step. Show your reasoning, then give your final answer."</div>
+        </div>
+        <div class="card">
+          <h3>3. Few-Shot Prompting</h3>
+          <p>Show Claude 2–3 examples of input→output pairs before your actual request. It learns the pattern instantly.</p>
+          <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">Example 1: Input: "Tired" → Output: "Exhausted beyond measure"
+Example 2: Input: "Happy" → Output: "Radiating joy and warmth"
+Now do: Input: "Confused" → Output:</div>
+        </div>
+        <div class="card">
+          <h3>4. Persona + Constraints</h3>
+          <p>Combine who Claude should be with what it must/must not do.</p>
+          <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">"Act as a tough-but-fair code reviewer. Point out bugs and bad practices. Do NOT rewrite the code for me — ask questions instead. Be direct."</div>
+        </div>
+        <div class="card">
+          <h3>5. Output Formatting</h3>
+          <p>Specify exactly how you want the output structured.</p>
+          <ul style="margin-top:0.5rem;">
+            <li>"Respond in JSON format with keys: title, summary, action_items"</li>
+            <li>"Use markdown headers and bullet points"</li>
+            <li>"Return a table with columns: Feature | Pro | Con"</li>
+            <li>"Give me exactly 3 options, numbered, each under 50 words"</li>
+          </ul>
+        </div>
+      `},
+      { name: 'Templates', content: `
+        <div class="playground">
+          <h4>🧩 Universal Prompt Template</h4>
+          <div class="prompt-box">## Role
+You are [ROLE] with expertise in [DOMAIN].
+
+## Task
+[DESCRIBE EXACTLY WHAT YOU WANT]
+
+## Context
+[BACKGROUND INFORMATION, CONSTRAINTS, AUDIENCE]
+
+## Format
+- Length: [SHORT / MEDIUM / LONG / EXACT WORD COUNT]
+- Style: [FORMAL / CASUAL / TECHNICAL / SIMPLE]
+- Structure: [BULLETS / PARAGRAPH / TABLE / JSON]
+
+## Constraints
+- Do: [MUST INCLUDE]
+- Don't: [MUST AVOID]</div>
+          <button class="copy-btn" onclick="copyPrompt(this, '## Role\nYou are [ROLE] with expertise in [DOMAIN].\n\n## Task\n[DESCRIBE EXACTLY WHAT YOU WANT]\n\n## Context\n[BACKGROUND INFORMATION, CONSTRAINTS, AUDIENCE]\n\n## Format\n- Length: [SHORT / MEDIUM / LONG / EXACT WORD COUNT]\n- Style: [FORMAL / CASUAL / TECHNICAL / SIMPLE]\n- Structure: [BULLETS / PARAGRAPH / TABLE / JSON]\n\n## Constraints\n- Do: [MUST INCLUDE]\n- Dont: [MUST AVOID]')">Copy Template</button>
+        </div>
+        <div class="playground">
+          <h4>🔁 Iterative Refinement Template</h4>
+          <div class="prompt-box">I'm going to share [CONTENT TYPE] with you.
+Please [INITIAL TASK].
+Then wait for my feedback.
+After I respond, revise based on my notes.
+We'll iterate until I say "final version".
+
+Here is the content:
+[PASTE CONTENT]</div>
+          <button class="copy-btn" onclick="copyPrompt(this, 'I\'m going to share [CONTENT TYPE] with you.\nPlease [INITIAL TASK].\nThen wait for my feedback.\nAfter I respond, revise based on my notes.\nWe\'ll iterate until I say \"final version\".\n\nHere is the content:\n[PASTE CONTENT]')">Copy Template</button>
+        </div>
+      `},
+      { name: 'Anti-Patterns', content: `
+        <div class="card" style="border-left: 4px solid #ef4444;">
+          <h3>❌ Common Prompting Mistakes</h3>
+          <ul>
+            <li style="margin-bottom:0.75rem;"><strong>Being vague:</strong> "Write something about AI" gives Claude nothing to work with. Always specify topic, audience, tone, and length.</li>
+            <li style="margin-bottom:0.75rem;"><strong>Asking for everything at once:</strong> Huge multi-part prompts often produce mediocre outputs. Break them into steps.</li>
+            <li style="margin-bottom:0.75rem;"><strong>Not providing examples:</strong> If you want a specific style, show it. Don't just describe it.</li>
+            <li style="margin-bottom:0.75rem;"><strong>Ignoring Claude's uncertainty:</strong> If Claude says "I'm not sure", that's important. Push it to reason through or verify.</li>
+            <li style="margin-bottom:0.75rem;"><strong>Accepting the first response:</strong> Say "good start, now make it more concise / more persuasive / in a different tone."</li>
+          </ul>
+        </div>
+        <div class="tip-box"><strong>Power move:</strong> After getting a response, say "What are the weaknesses of this answer?" — Claude will critique its own output and improve it.</div>
+      `}
+    ]
+  },
+  {
+    id: 'use-cases',
+    icon: '🎯',
+    title: 'Real-World Use Cases',
+    desc: 'Apply Claude to writing, research, coding, learning, and business',
+    level: 'beginner',
+    tabs: [
+      { name: 'Writing', content: `
+        <div class="card"><h3>✍️ Claude for Writing</h3><ul>
+          <li>Drafting emails, reports, proposals, cover letters</li>
+          <li>Editing and proofreading with tracked changes</li>
+          <li>Rewriting content for different audiences or tones</li>
+          <li>Generating blog posts, LinkedIn content, social media</li>
+          <li>Brainstorming headlines, taglines, and hooks</li>
+        </ul></div>
+        <div class="playground"><h4>Try This Prompt</h4>
+        <div class="prompt-box">Rewrite the following paragraph three times:
+1. For a 10-year-old
+2. For a PhD researcher
+3. As a tweet (under 280 characters)
+
+Paragraph: [PASTE YOUR TEXT]</div>
+        <button class="copy-btn" onclick="copyPrompt(this, 'Rewrite the following paragraph three times:\n1. For a 10-year-old\n2. For a PhD researcher\n3. As a tweet (under 280 characters)\n\nParagraph: [PASTE YOUR TEXT]')">Copy</button></div>
+      `},
+      { name: 'Research', content: `
+        <div class="card"><h3>🔬 Claude for Research</h3><ul>
+          <li>Summarising long documents (paste the whole thing!)</li>
+          <li>Comparing multiple perspectives on a topic</li>
+          <li>Creating study notes from textbook chapters</li>
+          <li>Generating research questions and hypotheses</li>
+          <li>Explaining complex academic papers in plain language</li>
+        </ul></div>
+        <div class="playground"><h4>Research Synthesis Prompt</h4>
+        <div class="prompt-box">I'm researching [TOPIC]. Here are three sources I've gathered:
+
+Source 1: [PASTE TEXT]
+Source 2: [PASTE TEXT]
+Source 3: [PASTE TEXT]
+
+Please:
+1. Identify the key claims each source makes
+2. Note where they agree and disagree
+3. Highlight any gaps or unanswered questions
+4. Suggest 3 follow-up questions I should investigate</div>
+        <button class="copy-btn" onclick="copyPrompt(this, 'I\'m researching [TOPIC]. Here are three sources I\'ve gathered:\n\nSource 1: [PASTE TEXT]\nSource 2: [PASTE TEXT]\nSource 3: [PASTE TEXT]\n\nPlease:\n1. Identify the key claims each source makes\n2. Note where they agree and disagree\n3. Highlight any gaps or unanswered questions\n4. Suggest 3 follow-up questions I should investigate')">Copy</button></div>
+      `},
+      { name: 'Coding', content: `
+        <div class="card"><h3>💻 Claude for Coding</h3><ul>
+          <li>Writing functions, scripts, and full programs</li>
+          <li>Debugging — paste an error and ask what's wrong</li>
+          <li>Code review — ask for security, readability, efficiency feedback</li>
+          <li>Explaining code you don't understand</li>
+          <li>Converting code between languages (Python → JavaScript)</li>
+          <li>Writing documentation and comments</li>
+        </ul></div>
+        <div class="playground"><h4>Debug Prompt</h4>
+        <div class="prompt-box">I have a bug in my [LANGUAGE] code. Here's the code and the error:
+
+Code:
+[PASTE CODE]
+
+Error message:
+[PASTE ERROR]
+
+Please:
+1. Identify the root cause
+2. Explain why it's happening
+3. Show the fixed code
+4. Tell me how to avoid this in future</div>
+        <button class="copy-btn" onclick="copyPrompt(this, 'I have a bug in my [LANGUAGE] code. Here\'s the code and the error:\n\nCode:\n[PASTE CODE]\n\nError message:\n[PASTE ERROR]\n\nPlease:\n1. Identify the root cause\n2. Explain why it\'s happening\n3. Show the fixed code\n4. Tell me how to avoid this in future')">Copy</button></div>
+      `},
+      { name: 'Business', content: `
+        <div class="card"><h3>💼 Claude for Business</h3><ul>
+          <li>SWOT analysis and strategic planning</li>
+          <li>Meeting notes → action items (paste transcript)</li>
+          <li>Creating pitch decks outlines and investor narratives</li>
+          <li>Customer persona development</li>
+          <li>Competitive analysis frameworks</li>
+          <li>Job descriptions, interview questions, performance reviews</li>
+        </ul></div>
+        <div class="playground"><h4>Strategic Analysis Prompt</h4>
+        <div class="prompt-box">You are a McKinsey-level strategy consultant.
+
+Conduct a SWOT analysis for the following business:
+[DESCRIBE THE BUSINESS IN 3-5 SENTENCES]
+
+Then recommend the top 3 strategic priorities for the next 12 months, with specific actions for each.
+
+Format: Use headers, bullet points. Keep each section to 3 bullets max.</div>
+        <button class="copy-btn" onclick="copyPrompt(this, 'You are a McKinsey-level strategy consultant.\n\nConduct a SWOT analysis for the following business:\n[DESCRIBE THE BUSINESS IN 3-5 SENTENCES]\n\nThen recommend the top 3 strategic priorities for the next 12 months, with specific actions for each.\n\nFormat: Use headers, bullet points. Keep each section to 3 bullets max.')">Copy</button></div>
+      `}
+    ]
+  },
+  {
+    id: 'context-memory',
+    icon: '🧠',
+    title: 'Context & Memory',
+    desc: 'How Claude remembers (and forgets) — and how to work with it',
+    level: 'intermediate',
+    tabs: [
+      { name: 'How Memory Works', content: `
+        <div class="card">
+          <h3>Claude Has No Persistent Memory</h3>
+          <p>Each conversation starts fresh. Claude remembers everything <em>within</em> a conversation but forgets everything when it ends. This is important for:</p>
+          <ul style="margin-top:0.5rem;">
+            <li>Privacy — your conversations aren't shared between sessions</li>
+            <li>Consistency — you may need to re-introduce yourself each time</li>
+            <li>Strategy — front-load the context Claude needs</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Managing Long Conversations</h3>
+          <p>As conversations get very long, Claude may "forget" things from the start. Tips:</p>
+          <ul style="margin-top:0.5rem;">
+            <li>Periodically ask: "Summarise our conversation so far"</li>
+            <li>Start a new chat and paste that summary as context</li>
+            <li>Keep a "context document" you paste at the start of each session</li>
+          </ul>
+        </div>
+        <div class="playground"><h4>Context Primer Template</h4>
+        <div class="prompt-box">## Who I am
+[Your name, role, expertise level]
+
+## What I'm working on
+[Project or goal in 2-3 sentences]
+
+## How I like to work with Claude
+[e.g., "Give me options not answers", "Be direct", "Use UK spelling"]
+
+## Today's task
+[What you want to accomplish in this session]</div>
+        <button class="copy-btn" onclick="copyPrompt(this, '## Who I am\n[Your name, role, expertise level]\n\n## What I\'m working on\n[Project or goal in 2-3 sentences]\n\n## How I like to work with Claude\n[e.g., \"Give me options not answers\", \"Be direct\", \"Use UK spelling\"]\n\n## Today\'s task\n[What you want to accomplish in this session]')">Copy</button></div>
+      `},
+      { name: 'Working Smarter', content: `
+        <div class="card">
+          <h3>The "Reference Card" Technique</h3>
+          <p>Create a personal reference card you paste at the start of every Claude session:</p>
+          <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">Name: [You]
+Profession: [Your job]
+Current project: [One line]
+Communication style I prefer: [Direct / detailed / with examples]
+Avoid: [Any topics or styles you don't want]
+Always: [Things you always want Claude to do]</div>
+        </div>
+        <div class="card">
+          <h3>Document Analysis Strategy</h3>
+          <p>When analysing long documents:</p>
+          <ul style="margin-top:0.5rem;">
+            <li>Paste the document first, then ask your question</li>
+            <li>Use: "Based only on the document above…" to ground Claude</li>
+            <li>Ask for quotes/references: "Show me the exact passage that supports this"</li>
+            <li>Extract structured data: "List every date, name, and figure mentioned"</li>
+          </ul>
+        </div>
+      `}
+    ]
+  },
+  {
+    id: 'advanced-techniques',
+    icon: '🚀',
+    title: 'Advanced Techniques',
+    desc: 'Prompt chaining, system prompts, meta-prompting, agents',
+    level: 'advanced',
+    tabs: [
+      { name: 'Prompt Chaining', content: `
+        <div class="card">
+          <h3>What is Prompt Chaining?</h3>
+          <p>Breaking a complex task into a sequence of smaller prompts, where each output feeds the next. This dramatically improves quality on complex tasks.</p>
+        </div>
+        <div class="card">
+          <h3>Example: Writing a Report</h3>
+          <p>Instead of "Write a report on X", chain it:</p>
+          <ol style="padding-left:1.2rem; margin-top:0.5rem;">
+            <li style="margin-bottom:0.5rem;"><strong>Step 1:</strong> "List the 5 most important aspects of X to cover in a business report."</li>
+            <li style="margin-bottom:0.5rem;"><strong>Step 2:</strong> "For each aspect, write 3 key insights from your knowledge."</li>
+            <li style="margin-bottom:0.5rem;"><strong>Step 3:</strong> "Now write the executive summary in 150 words using those insights."</li>
+            <li style="margin-bottom:0.5rem;"><strong>Step 4:</strong> "Expand each section into 2 paragraphs."</li>
+            <li><strong>Step 5:</strong> "Review the full draft and suggest 3 improvements."</li>
+          </ol>
+        </div>
+        <div class="tip-box"><strong>Why it works:</strong> Each step focuses Claude's attention, reducing errors and producing more structured thinking.</div>
+      `},
+      { name: 'System Prompts', content: `
+        <div class="card">
+          <h3>System Prompts (for Developers)</h3>
+          <p>If you use Claude via API, a system prompt is a hidden set of instructions that runs before every user message. It's how you create custom Claude-powered tools.</p>
+        </div>
+        <div class="playground"><h4>Example System Prompt — Customer Support Bot</h4>
+        <div class="prompt-box">You are Aria, a customer support agent for TechFlow SaaS.
+
+Personality: Friendly, efficient, empathetic. Never robotic.
+
+Rules:
+- Always greet the user by name if known
+- Never promise features not in our product
+- For billing issues, always escalate to human
+- Respond in the user's language
+
+Product knowledge:
+- We offer 3 plans: Starter ($29), Pro ($99), Enterprise (custom)
+- Free trial: 14 days, no credit card required
+- Support: Mon-Fri 9am-6pm GST
+
+If you don't know something, say: "Let me find that out for you" and ask for their email.</div>
+        <button class="copy-btn" onclick="copyPrompt(this, 'You are Aria, a customer support agent for TechFlow SaaS.\n\nPersonality: Friendly, efficient, empathetic. Never robotic.\n\nRules:\n- Always greet the user by name if known\n- Never promise features not in our product\n- For billing issues, always escalate to human\n- Respond in the user\'s language')">Copy</button></div>
+      `},
+      { name: 'Meta-Prompting', content: `
+        <div class="card">
+          <h3>Meta-Prompting: Ask Claude to Improve Your Prompt</h3>
+          <p>One of the most powerful techniques: ask Claude to help you write better prompts.</p>
+        </div>
+        <div class="playground"><h4>Prompt Improver</h4>
+        <div class="prompt-box">Here is a prompt I wrote for Claude:
+
+[YOUR PROMPT]
+
+Please:
+1. Identify the weaknesses in this prompt
+2. Explain what Claude would likely misunderstand
+3. Rewrite it as an expert prompt engineer would
+4. Explain why your version is better</div>
+        <button class="copy-btn" onclick="copyPrompt(this, 'Here is a prompt I wrote for Claude:\n\n[YOUR PROMPT]\n\nPlease:\n1. Identify the weaknesses in this prompt\n2. Explain what Claude would likely misunderstand\n3. Rewrite it as an expert prompt engineer would\n4. Explain why your version is better')">Copy</button></div>
+        <div class="playground"><h4>Ask Claude for a Prompt</h4>
+        <div class="prompt-box">I want to use Claude to help me [DESCRIBE YOUR GOAL].
+My context: [WHO YOU ARE, WHAT YOU KNOW]
+My desired output: [WHAT GOOD LOOKS LIKE]
+
+Please write me an optimal prompt I can use to achieve this goal.</div>
+        <button class="copy-btn" onclick="copyPrompt(this, 'I want to use Claude to help me [DESCRIBE YOUR GOAL].\nMy context: [WHO YOU ARE, WHAT YOU KNOW]\nMy desired output: [WHAT GOOD LOOKS LIKE]\n\nPlease write me an optimal prompt I can use to achieve this goal.')">Copy</button></div>
+      `}
+    ]
+  },
+  {
+    id: 'limitations',
+    icon: '⚠️',
+    title: 'Limitations & Ethics',
+    desc: 'What Claude can\'t do, hallucinations, bias, and responsible use',
+    level: 'beginner',
+    tabs: [
+      { name: 'Limitations', content: `
+        <div class="card">
+          <h3>What Claude Cannot Do</h3>
+          <ul>
+            <li style="margin-bottom:0.5rem;"><strong>Browse the internet in real-time</strong> — Claude's knowledge has a training cutoff date</li>
+            <li style="margin-bottom:0.5rem;"><strong>Remember past conversations</strong> — each session is independent</li>
+            <li style="margin-bottom:0.5rem;"><strong>Execute code or actions</strong> — unless connected to tools (Claude.ai can run some code)</li>
+            <li style="margin-bottom:0.5rem;"><strong>Guarantee accuracy</strong> — always verify important facts, especially numbers, dates, and citations</li>
+            <li style="margin-bottom:0.5rem;"><strong>Process audio or video</strong> — text and images only (in standard access)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Hallucination — The #1 Risk</h3>
+          <p>Claude sometimes generates confident but incorrect information. This is called <strong>hallucination</strong>.</p>
+          <div class="tip-box" style="margin-top:0.75rem;"><strong>Prevention strategies:</strong><br>
+          • Ask Claude to cite sources (then verify them)<br>
+          • Say: "If you're not sure, say so — don't guess"<br>
+          • Ask: "How confident are you in this answer?"<br>
+          • Cross-check any factual claims with authoritative sources</div>
+        </div>
+      `},
+      { name: 'Ethics', content: `
+        <div class="card">
+          <h3>Using Claude Responsibly</h3>
+          <ul>
+            <li style="margin-bottom:0.5rem;"><strong>Transparency:</strong> Disclose AI involvement in your work where appropriate</li>
+            <li style="margin-bottom:0.5rem;"><strong>Accuracy:</strong> Don't publish Claude's output without review and fact-checking</li>
+            <li style="margin-bottom:0.5rem;"><strong>Privacy:</strong> Don't paste sensitive personal or confidential data into Claude</li>
+            <li style="margin-bottom:0.5rem;"><strong>Bias awareness:</strong> Claude can reflect biases in its training data — think critically</li>
+            <li style="margin-bottom:0.5rem;"><strong>Dependency:</strong> Use Claude as a tool, not a crutch — keep developing your own skills</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>What Claude Will Refuse</h3>
+          <p>Claude is designed to decline requests that involve:</p>
+          <ul style="margin-top:0.5rem;">
+            <li>Creating harmful or dangerous content</li>
+            <li>Producing illegal content or facilitating crimes</li>
+            <li>Generating explicit sexual content by default</li>
+            <li>Impersonating real people in misleading ways</li>
+          </ul>
+          <div class="tip-box" style="margin-top:0.75rem;"><strong>Note:</strong> These limits are features, not bugs. They make Claude safer and more trustworthy.</div>
+        </div>
+      `}
+    ]
+  },
+  {
+    id: 'workflow-mastery',
+    icon: '🏆',
+    title: 'Workflow Mastery',
+    desc: 'Build personal AI workflows for daily productivity and deep work',
+    level: 'advanced',
+    tabs: [
+      { name: 'Daily Workflows', content: `
+        <div class="card"><h3>🌅 Morning Briefing Prompt</h3>
+        <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">Here is my to-do list for today: [LIST]
+Here are my top 3 priorities: [LIST]
+I have [X] hours of focused work time.
+
+Please:
+1. Prioritise my tasks using the Eisenhower Matrix
+2. Suggest a realistic time block schedule
+3. Flag any tasks I should delegate or drop
+4. Give me one motivating insight to start the day</div></div>
+        <div class="card"><h3>📚 Learning Accelerator</h3>
+        <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">I want to learn [TOPIC] in [TIME PERIOD].
+My current level: [BEGINNER / INTERMEDIATE / ADVANCED]
+My goal: [WHAT I WANT TO BE ABLE TO DO]
+
+Create:
+1. A structured learning roadmap with milestones
+2. The 5 most important concepts to master first
+3. 3 practical exercises to test my understanding
+4. Resources (books, courses, communities) to explore</div></div>
+      `},
+      { name: 'Power Combos', content: `
+        <div class="card">
+          <h3>🔥 The "Devil's Advocate" Combo</h3>
+          <p>Get Claude to challenge your thinking:</p>
+          <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">Here is my plan / argument / decision: [DESCRIBE]
+
+First, steelman my position — make the strongest possible case for it.
+Then, play devil's advocate — find every flaw, risk, and counter-argument.
+Finally, give your honest verdict: should I proceed, revise, or abandon this?</div>
+        </div>
+        <div class="card">
+          <h3>🎭 The "Three Experts" Technique</h3>
+          <div class="prompt-box" style="background:#1a1a2e; color:#a5f3fc; border-radius:8px; padding:1rem; font-family:monospace; font-size:0.82rem; margin-top:0.5rem;">I have a problem: [DESCRIBE]
+
+Please respond as three different experts:
+1. [EXPERT TYPE 1, e.g., "a systems engineer"]
+2. [EXPERT TYPE 2, e.g., "a behavioural psychologist"]
+3. [EXPERT TYPE 3, e.g., "a first-principles thinker"]
+
+Each should give a 3-sentence perspective. Then synthesise the best combined advice.</div>
+        </div>
+      `},
+      { name: 'Build Your Stack', content: `
+        <div class="card">
+          <h3>Your Personal Claude Stack</h3>
+          <p>Build a collection of prompts for tasks you do repeatedly:</p>
+          <ul style="margin-top:0.5rem;">
+            <li>📧 Your ideal email reply prompt</li>
+            <li>📋 Your meeting summary template</li>
+            <li>🔍 Your research synthesis prompt</li>
+            <li>📝 Your writing feedback prompt</li>
+            <li>💡 Your brainstorming session opener</li>
+          </ul>
+          <div class="tip-box" style="margin-top:0.75rem;"><strong>Pro move:</strong> Keep these in a Notion doc or text file. Paste them in as needed. You'll save hours per week.</div>
+        </div>
+        <div class="card">
+          <h3>Integrations to Explore</h3>
+          <ul>
+            <li><strong>Claude.ai Projects</strong> — Give Claude persistent context about your work</li>
+            <li><strong>Claude API</strong> — Build your own custom Claude-powered tools</li>
+            <li><strong>Zapier / Make</strong> — Automate workflows with Claude in the loop</li>
+            <li><strong>Claude in VS Code</strong> — AI pair-programming in your editor</li>
+          </ul>
+        </div>
+      `}
+    ]
+  }
+];
+
+const QUIZ_QUESTIONS = [
+  { q: "What does 'context window' mean in Claude?", opts: ["The visual layout of the chat interface","The amount of text Claude can read and remember in one conversation","The time limit per conversation","The number of tabs you can open"], correct: 1, exp: "The context window is Claude's working memory — how much text it can process at once. Claude's is up to 200,000 tokens (~150,000 words)." },
+  { q: "Which Claude model is best for everyday tasks requiring speed and cost-efficiency?", opts: ["Claude Opus","Claude Haiku","Claude Sonnet","Claude Mini"], correct: 2, exp: "Claude Sonnet is the balanced model — smart, fast, and cost-effective for most everyday tasks." },
+  { q: "What is 'hallucination' in the context of AI?", opts: ["When Claude runs out of memory","When Claude produces confident but incorrect information","When Claude refuses to answer","When Claude generates images"], correct: 1, exp: "Hallucination is when an AI model generates false or made-up information with confidence. Always verify important facts." },
+  { q: "What does Chain-of-Thought prompting do?", opts: ["Links multiple Claude accounts together","Asks Claude to think step-by-step before answering","Creates a chain of automated prompts","Connects Claude to the internet"], correct: 1, exp: "Chain-of-thought prompting asks Claude to reason through a problem step-by-step, which significantly improves accuracy on complex tasks." },
+  { q: "What is a 'system prompt'?", opts: ["The first message you send in a conversation","A hidden instruction given before the conversation starts (used by developers)","A shortcut to reset Claude's memory","A special formatting command"], correct: 1, exp: "System prompts are hidden instructions set before a conversation begins. Developers use them to give Claude a persona, rules, and knowledge for custom applications." },
+  { q: "Which of these is the BEST example of a well-written prompt?", opts: ["Tell me about marketing","What is SEO?","Write a 150-word LinkedIn post about AI productivity for small business owners. Tone: professional but conversational. Include one statistic.","Explain everything about digital marketing please"], correct: 2, exp: "The best prompt specifies the task, format, audience, tone, and constraints — leaving nothing ambiguous for Claude." },
+  { q: "What is few-shot prompting?", opts: ["Giving Claude very little information","Providing 2-3 examples before your actual request so Claude learns the pattern","Asking Claude multiple short questions","Using Claude for only a few minutes"], correct: 1, exp: "Few-shot prompting gives Claude example input-output pairs so it understands the pattern or style you want, before you give it the real task." },
+  { q: "How does Claude handle memory between separate conversations?", opts: ["It remembers everything automatically","It has a 7-day memory","It forgets everything — each conversation starts fresh","It saves memories if you ask it to"], correct: 2, exp: "By default, Claude has no memory between conversations. Each new chat starts completely fresh. You need to re-provide context each time." },
+  { q: "What does HHH stand for in Anthropic's design principles?", opts: ["Human, Helpful, Honest","Helpful, Harmless, Honest","Helpful, Humble, Human","Honest, Holistic, Humane"], correct: 1, exp: "Anthropic designs Claude around three principles: Helpful (genuinely useful), Harmless (avoids causing damage), and Honest (transparent about uncertainty)." },
+  { q: "What is meta-prompting?", opts: ["Using Claude to translate prompts to other languages","Using Claude to help you write or improve your own prompts","A type of system prompt used in APIs","Asking Claude to summarise a conversation"], correct: 1, exp: "Meta-prompting means using Claude itself to help you design better prompts. It's one of the most powerful techniques for power users." },
+  { q: "Which strategy best prevents Claude from hallucinating?", opts: ["Ask questions very quickly","Tell Claude to be confident in all answers","Ask Claude to express uncertainty when unsure, and verify important facts independently","Always use Claude Haiku for factual questions"], correct: 2, exp: "The best defence against hallucination is prompting Claude to acknowledge uncertainty and independently verifying critical facts, especially numbers and citations." },
+  { q: "What is the primary benefit of prompt chaining?", opts: ["It makes Claude respond faster","It allows multiple users to share one conversation","It breaks complex tasks into focused steps, improving quality","It automatically sends prompts to Claude every hour"], correct: 2, exp: "Prompt chaining breaks complex tasks into a sequence of smaller, focused steps. Each step's output feeds the next, resulting in much higher quality outputs." }
+];
+
+const PROMPT_LIBRARY = [
+  { category: "📧 Email & Communication", prompts: [
+    { title: "Professional Email Drafter", text: "You are an expert business communicator.\n\nWrite a professional email for the following situation:\nSituation: [DESCRIBE]\nFrom: [YOUR ROLE]\nTo: [RECIPIENT & THEIR ROLE]\nGoal: [WHAT YOU WANT TO ACHIEVE]\nTone: [FORMAL / FRIENDLY / ASSERTIVE]\nLength: Under [X] words\n\nInclude: Subject line, greeting, body, clear CTA, sign-off." },
+    { title: "Email Tone Rewriter", text: "Rewrite this email in three different tones:\n1. More formal and assertive\n2. Warmer and more empathetic\n3. More concise (cut by 50%)\n\nOriginal email:\n[PASTE EMAIL]" },
+    { title: "Difficult Conversation Script", text: "Help me write a script for a difficult conversation.\nSituation: [DESCRIBE — e.g., giving feedback, asking for a raise, saying no]\nMy relationship with this person: [DESCRIBE]\nMy main concern: [WHAT I'M WORRIED ABOUT]\n\nGive me:\n1. An opening line\n2. The key points to make\n3. How to handle likely pushback\n4. A positive closing" }
+  ]},
+  { category: "📊 Analysis & Strategy", prompts: [
+    { title: "Business Decision Framework", text: "I need to make a decision about: [DESCRIBE DECISION]\n\nAnalyse this using:\n1. First principles: What are the fundamental facts?\n2. Costs and benefits: Quantify where possible\n3. Risks: What could go wrong? How likely?\n4. Alternatives: What else could I do?\n5. Recommendation: What should I do and why?" },
+    { title: "Competitive Analysis", text: "You are a strategic analyst.\n\nCompare [MY PRODUCT/SERVICE] with [COMPETITOR A] and [COMPETITOR B].\n\nFor each, analyse:\n- Core value proposition\n- Target audience\n- Key strengths\n- Notable weaknesses\n- Pricing strategy\n\nConclude with: Where is the biggest gap in the market?" },
+    { title: "Problem-Solving Workshop", text: "I have a problem: [DESCRIBE PROBLEM]\n\nGuide me through solving it:\n1. Restate the problem in one clear sentence\n2. Identify the root cause (ask 5 Whys)\n3. Generate 5 possible solutions (diverse approaches)\n4. Evaluate each: effort vs. impact matrix\n5. Recommend the best path forward with first steps" }
+  ]},
+  { category: "🎓 Learning & Education", prompts: [
+    { title: "Concept Explainer (Any Level)", text: "Explain [CONCEPT] to me.\n\nFirst, explain it as if I'm:\n1. A complete beginner (use an analogy)\n2. Someone with basic knowledge (use proper terminology)\n3. An expert (go deep)\n\nThen give me 3 questions I should be able to answer if I understand this concept." },
+    { title: "Socratic Tutor", text: "You are a Socratic tutor helping me understand [TOPIC/SUBJECT].\n\nInstead of giving me answers directly:\n- Ask me questions to guide my thinking\n- When I answer, probe deeper\n- If I'm wrong, don't tell me — ask another question that reveals the gap\n- Only after 5 exchanges, give a clear explanation of anything I'm still missing\n\nStart with your first question." },
+    { title: "Study Plan Generator", text: "I need to master [TOPIC] for [PURPOSE — e.g., exam, job, project].\nTimeframe: [X weeks/months]\nCurrent level: [BEGINNER / INTERMEDIATE / ADVANCED]\nTime per day: [X hours]\n\nCreate:\n1. A week-by-week study plan\n2. The most important 10 concepts to focus on\n3. Recommended resources (free and paid)\n4. How to test my own understanding" }
+  ]},
+  { category: "🎨 Creative & Content", prompts: [
+    { title: "Content Idea Generator", text: "I create content for [AUDIENCE] about [TOPIC].\nPlatform: [LINKEDIN / BLOG / TWITTER / YOUTUBE]\nMy unique angle: [WHAT MAKES YOUR PERSPECTIVE DIFFERENT]\n\nGenerate 10 content ideas that:\n- Would genuinely help my audience\n- Haven't been done to death\n- Play to my unique perspective\n\nFor each: title, hook (first line), and key takeaway." },
+    { title: "Story Outline Builder", text: "Help me outline a [STORY TYPE: short story / novel / screenplay / case study].\nGenre: [GENRE]\nCentral theme: [THEME]\nMain character: [BRIEF DESCRIPTION]\nSetting: [WHERE & WHEN]\n\nCreate:\n1. Three-act structure with key beats\n2. Character arc\n3. The central conflict and resolution\n4. The opening scene description" },
+    { title: "Brand Voice Developer", text: "Help me define a brand voice for:\nBrand name: [NAME]\nWhat we do: [DESCRIPTION]\nTarget audience: [WHO]\nPersonality we want to project: [3 ADJECTIVES]\n\nDevelop:\n1. Brand voice guidelines (do's and don'ts)\n2. Sample tagline options (5 variations)\n3. Example of on-brand vs. off-brand copy\n4. Vocabulary list: words we use / words we avoid" }
+  ]}
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let completedModules = JSON.parse(localStorage.getItem('mc_completed') || '[]');
+let xp = parseInt(localStorage.getItem('mc_xp') || '0');
+let quizAnswers = {};
+let quizSubmitted = false;
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = ['home','modules','prompts','cheatsheet','quiz','progress'];
+  const idx = map.indexOf(id);
+  if (idx >= 0) tabs[idx].classList.add('active');
+  updateProgress();
+  if (id === 'modules') renderModules();
+  if (id === 'prompts') renderPromptLab();
+  if (id === 'cheatsheet') renderCheatsheet();
+  if (id === 'quiz') renderQuiz();
+  if (id === 'progress') renderProgress();
+  window.scrollTo(0,0);
+}
+
+function updateProgress() {
+  const pct = Math.max(5, Math.round((completedModules.length / MODULES.length) * 100));
+  document.getElementById('global-progress').style.width = pct + '%';
+}
+
+// ============================================================
+// MODULES
+// ============================================================
+function renderModules() {
+  const grid = document.getElementById('module-grid');
+  grid.innerHTML = MODULES.map((m,i) => `
+    <div class="module-card ${completedModules.includes(m.id) ? 'done' : ''}" onclick="openLesson('${m.id}')">
+      <div class="module-icon">${m.icon}</div>
+      <div class="module-title">${i+1}. ${m.title}</div>
+      <div class="module-desc">${m.desc}</div>
+      <span class="module-badge badge-${m.level}">${m.level.charAt(0).toUpperCase()+m.level.slice(1)}</span>
+      ${completedModules.includes(m.id) ? '<span class="module-badge" style="background:#dcfce7;color:#16a34a;margin-left:4px;">✓ Done</span>' : ''}
+    </div>
+  `).join('');
+  document.getElementById('modules-list').style.display = 'block';
+  document.getElementById('lesson-container').innerHTML = '';
+}
+
+function openLesson(id) {
+  const mod = MODULES.find(m => m.id === id);
+  if (!mod) return;
+  document.getElementById('modules-list').style.display = 'none';
+  const html = `
+    <div class="lesson-header">
+      <button class="back-btn" onclick="renderModules(); document.getElementById('modules-list').style.display='block';">← Back</button>
+      <div>
+        <div style="font-size:0.78rem;color:#6b7280;margin-bottom:2px;">${mod.icon} ${mod.level.toUpperCase()}</div>
+        <div class="lesson-title">${mod.title}</div>
+      </div>
+    </div>
+    <div class="inner-tabs">
+      ${mod.tabs.map((t,i) => `<button class="inner-tab ${i===0?'active':''}" onclick="switchTab('${id}',${i},this)">${t.name}</button>`).join('')}
+    </div>
+    ${mod.tabs.map((t,i) => `<div class="inner-content ${i===0?'active':''}" id="tab-${id}-${i}">${t.content}</div>`).join('')}
+    <div style="text-align:center;margin-top:2rem;">
+      <button class="quiz-submit" style="width:auto;padding:0.65rem 2rem;" onclick="markDone('${id}')">
+        ${completedModules.includes(id) ? '✓ Completed' : 'Mark as Complete ✓'}
+      </button>
+    </div>
+  `;
+  document.getElementById('lesson-container').innerHTML = html;
+  window.scrollTo(0,0);
+}
+
+function switchTab(id, idx, btn) {
+  const mod = MODULES.find(m => m.id === id);
+  mod.tabs.forEach((_,i) => {
+    const el = document.getElementById(`tab-${id}-${i}`);
+    if (el) el.classList.toggle('active', i === idx);
+  });
+  btn.closest('.inner-tabs').querySelectorAll('.inner-tab').forEach((t,i) => t.classList.toggle('active', i === idx));
+}
+
+function markDone(id) {
+  if (!completedModules.includes(id)) {
+    completedModules.push(id);
+    xp += 50;
+    localStorage.setItem('mc_completed', JSON.stringify(completedModules));
+    localStorage.setItem('mc_xp', xp);
+  }
+  openLesson(id);
+  updateProgress();
+}
+
+// ============================================================
+// PROMPT LAB
+// ============================================================
+function renderPromptLab() {
+  document.getElementById('prompt-lab-content').innerHTML = PROMPT_LIBRARY.map(cat => `
+    <h3 style="font-size:1rem;font-weight:700;margin:1.5rem 0 0.75rem;">${cat.category}</h3>
+    ${cat.prompts.map(p => `
+      <div class="card" style="margin-bottom:0.75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+          <strong style="font-size:0.9rem;">${p.title}</strong>
+          <button class="copy-btn" onclick="copyPrompt(this, \`${p.text.replace(/`/g,'\\`')}\`)">Copy</button>
+        </div>
+        <div class="prompt-box">${p.text}</div>
+      </div>
+    `).join('')}
+  `).join('');
+}
+
+// ============================================================
+// CHEATSHEET
+// ============================================================
+function renderCheatsheet() {
+  document.getElementById('cheatsheet-content').innerHTML = `
+    <div class="card" style="margin-bottom:1rem;">
+      <h3 style="margin-bottom:1rem;">⚡ Prompt Engineering Quick Reference</h3>
+      <table class="cheat-table">
+        <tr><th>Technique</th><th>When to Use</th><th>Example Phrase</th><th>Level</th></tr>
+        <tr><td>Role Prompting</td><td>Need domain expertise or specific voice</td><td>"You are a senior [role]..."</td><td><span class="tag tag-green">Beginner</span></td></tr>
+        <tr><td>Chain-of-Thought</td><td>Complex reasoning, math, logic</td><td>"Think step by step..."</td><td><span class="tag tag-green">Beginner</span></td></tr>
+        <tr><td>Few-Shot</td><td>Want a specific pattern or format</td><td>Show 2-3 examples first</td><td><span class="tag tag-blue">Intermediate</span></td></tr>
+        <tr><td>Constrained Output</td><td>Need specific format or length</td><td>"Respond only in JSON..."</td><td><span class="tag tag-green">Beginner</span></td></tr>
+        <tr><td>Persona</td><td>Creative work, practice, roleplay</td><td>"You are [character]..."</td><td><span class="tag tag-blue">Intermediate</span></td></tr>
+        <tr><td>Devil's Advocate</td><td>Testing ideas, finding weaknesses</td><td>"Steelman, then critique..."</td><td><span class="tag tag-blue">Intermediate</span></td></tr>
+        <tr><td>Prompt Chaining</td><td>Long/complex multi-step tasks</td><td>Break task into prompts</td><td><span class="tag tag-purple">Advanced</span></td></tr>
+        <tr><td>Meta-Prompting</td><td>Improving your own prompts</td><td>"Improve this prompt..."</td><td><span class="tag tag-purple">Advanced</span></td></tr>
+        <tr><td>Iterative Refinement</td><td>Content creation, writing</td><td>"Good start, now..."</td><td><span class="tag tag-blue">Intermediate</span></td></tr>
+        <tr><td>Three Experts</td><td>Decision making, analysis</td><td>"Respond as 3 experts..."</td><td><span class="tag tag-purple">Advanced</span></td></tr>
+      </table>
+    </div>
+    <div class="card" style="margin-bottom:1rem;">
+      <h3 style="margin-bottom:1rem;">🔧 Output Format Commands</h3>
+      <table class="cheat-table">
+        <tr><th>You want...</th><th>Say this...</th></tr>
+        <tr><td>Bullet points</td><td>"Use bullet points"</td></tr>
+        <tr><td>Numbered list</td><td>"Number each item"</td></tr>
+        <tr><td>Table</td><td>"Format as a table with columns: X, Y, Z"</td></tr>
+        <tr><td>JSON</td><td>"Respond only in valid JSON with keys: ..."</td></tr>
+        <tr><td>Short answer</td><td>"In one sentence..." / "Under 50 words"</td></tr>
+        <tr><td>Headers</td><td>"Use markdown headers for each section"</td></tr>
+        <tr><td>No fluff</td><td>"Be direct. No preamble or filler phrases."</td></tr>
+        <tr><td>Step-by-step</td><td>"Walk me through this step by step"</td></tr>
+        <tr><td>Multiple options</td><td>"Give me exactly 3 options. Number them."</td></tr>
+        <tr><td>Pros & Cons</td><td>"Give me a pros and cons list"</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:1rem;">💬 Magic Phrases</h3>
+      <table class="cheat-table">
+        <tr><th>Goal</th><th>What to say</th></tr>
+        <tr><td>Get Claude to admit uncertainty</td><td>"If you're not sure, say so"</td></tr>
+        <tr><td>Improve a response</td><td>"Good start. Make it more [concise/bold/specific]"</td></tr>
+        <tr><td>Challenge Claude</td><td>"What are the weaknesses of your answer?"</td></tr>
+        <tr><td>Get alternatives</td><td>"Give me 3 completely different approaches"</td></tr>
+        <tr><td>Simplify</td><td>"Explain this to someone with no background in this field"</td></tr>
+        <tr><td>Go deeper</td><td>"Expand on point 2. Give more detail."</td></tr>
+        <tr><td>Real examples</td><td>"Give me a real-world example of this"</td></tr>
+        <tr><td>Self-critique</td><td>"What did you get wrong or oversimplify above?"</td></tr>
+        <tr><td>Best prompt</td><td>"Write me the best prompt to get X"</td></tr>
+      </table>
+    </div>
+  `;
+}
+
+// ============================================================
+// QUIZ
+// ============================================================
+function renderQuiz() {
+  if (quizSubmitted) { showQuizResults(); return; }
+  document.getElementById('quiz-content').innerHTML = QUIZ_QUESTIONS.map((q,i) => `
+    <div class="quiz-q" id="q${i}">
+      <div class="q-text">Q${i+1}. ${q.q}</div>
+      <div class="options">
+        ${q.opts.map((o,j) => `
+          <button class="option" onclick="selectAnswer(${i},${j},this)" id="opt-${i}-${j}">${o}</button>
+        `).join('')}
+      </div>
+      <div class="explanation" id="exp-${i}">${q.exp}</div>
+    </div>
+  `).join('') + `
+    <button class="quiz-submit" onclick="submitQuiz()">Submit Quiz</button>
+  `;
+}
+
+function selectAnswer(qi, oi, btn) {
+  if (quizAnswers[qi] !== undefined) return;
+  quizAnswers[qi] = oi;
+  btn.closest('.options').querySelectorAll('.option').forEach((o,j) => {
+    o.disabled = true;
+    if (j === QUIZ_QUESTIONS[qi].correct) o.classList.add('correct');
+    else if (j === oi) o.classList.add('wrong');
+  });
+  document.getElementById(`exp-${qi}`).style.display = 'block';
+}
+
+function submitQuiz() {
+  const answered = Object.keys(quizAnswers).length;
+  if (answered < QUIZ_QUESTIONS.length) {
+    alert(`Please answer all ${QUIZ_QUESTIONS.length} questions first. You've answered ${answered} so far.`);
+    return;
+  }
+  const correct = Object.entries(quizAnswers).filter(([qi,oi]) => QUIZ_QUESTIONS[qi].correct === oi).length;
+  quizSubmitted = true;
+  xp += correct * 10;
+  if (correct === QUIZ_QUESTIONS.length) {
+    if (!completedModules.includes('quiz-perfect')) {
+      completedModules.push('quiz-perfect');
+      localStorage.setItem('mc_completed', JSON.stringify(completedModules));
+    }
+  }
+  localStorage.setItem('mc_xp', xp);
+  showQuizResults();
+}
+
+function showQuizResults() {
+  const correct = Object.entries(quizAnswers).filter(([qi,oi]) => QUIZ_QUESTIONS[qi].correct === oi).length;
+  const pct = Math.round((correct / QUIZ_QUESTIONS.length) * 100);
+  const grade = pct >= 90 ? '🏆 Expert' : pct >= 70 ? '⭐ Proficient' : pct >= 50 ? '📚 Developing' : '🌱 Beginner';
+  const msg = pct >= 90 ? "Outstanding! You're a Claude power user." : pct >= 70 ? "Great job! You have solid foundations." : pct >= 50 ? "Good effort. Review the modules and retake the quiz." : "Keep learning! Work through each module carefully.";
+  document.getElementById('quiz-content').innerHTML = `
+    <div class="quiz-score card">
+      <div class="score-circle">
+        <div class="score-num">${correct}/${QUIZ_QUESTIONS.length}</div>
+        <div class="score-lbl">Correct</div>
+      </div>
+      <h2 style="font-size:1.3rem;margin-bottom:0.5rem;">${grade}</h2>
+      <p style="color:#6b7280;font-size:0.9rem;margin-bottom:1.5rem;">${msg}</p>
+      <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <div style="text-align:center;background:#f3e8ff;padding:0.75rem 1.5rem;border-radius:8px;">
+          <div style="font-size:1.5rem;font-weight:800;color:#7c3aed;">${pct}%</div>
+          <div style="font-size:0.75rem;color:#6b7280;">Score</div>
+        </div>
+        <div style="text-align:center;background:#fef9c3;padding:0.75rem 1.5rem;border-radius:8px;">
+          <div style="font-size:1.5rem;font-weight:800;color:#a16207;">+${correct*10} XP</div>
+          <div style="font-size:0.75rem;color:#6b7280;">Earned</div>
+        </div>
+      </div>
+      <button class="quiz-submit" style="width:auto;margin-top:1.5rem;padding:0.65rem 2rem;" onclick="quizAnswers={};quizSubmitted=false;renderQuiz();">Retake Quiz</button>
+    </div>
+  `;
+}
+
+// ============================================================
+// PROGRESS
+// ============================================================
+function renderProgress() {
+  const pct = Math.round((completedModules.filter(id => MODULES.find(m=>m.id===id)).length / MODULES.length) * 100);
+  const achievements = [
+    { icon: '🚀', name: 'Getting Started', desc: 'Complete your first module', unlocked: completedModules.length >= 1 },
+    { icon: '📚', name: 'Dedicated Learner', desc: 'Complete 4 modules', unlocked: completedModules.filter(id => MODULES.find(m=>m.id===id)).length >= 4 },
+    { icon: '🏆', name: 'Claude Master', desc: 'Complete all 8 modules', unlocked: completedModules.filter(id => MODULES.find(m=>m.id===id)).length >= 8 },
+    { icon: '🧠', name: 'Quiz Champion', desc: 'Get 100% on the quiz', unlocked: completedModules.includes('quiz-perfect') },
+    { icon: '⚡', name: 'Power User', desc: 'Earn 400+ XP', unlocked: xp >= 400 },
+  ];
+  document.getElementById('progress-content').innerHTML = `
+    <div class="progress-section">
+      <div class="progress-header">
+        <h3>Overall Progress</h3>
+        <span class="xp-badge">⭐ ${xp} XP</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <p style="font-size:0.82rem;color:#6b7280;">${completedModules.filter(id => MODULES.find(m=>m.id===id)).length} of ${MODULES.length} modules completed (${pct}%)</p>
+    </div>
+    <div class="progress-section">
+      <h3 style="margin-bottom:1rem;">Module Status</h3>
+      ${MODULES.map(m => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid #f3f4f6;">
+          <span style="font-size:0.88rem;">${m.icon} ${m.title}</span>
+          <span style="font-size:0.78rem;font-weight:600;color:${completedModules.includes(m.id)?'#16a34a':'#9ca3af'};">${completedModules.includes(m.id)?'✓ Done':'Pending'}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div class="progress-section">
+      <h3 style="margin-bottom:1rem;">Achievements</h3>
+      ${achievements.map(a => `
+        <div class="achievement" style="opacity:${a.unlocked?1:0.4}">
+          <div class="ach-icon">${a.icon}</div>
+          <div>
+            <div class="ach-name">${a.name} ${a.unlocked ? '✓' : '🔒'}</div>
+            <div class="ach-desc">${a.desc}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="text-align:center;margin-top:1rem;">
+      <button onclick="if(confirm('Reset all progress?')){localStorage.removeItem('mc_completed');localStorage.removeItem('mc_xp');completedModules=[];xp=0;renderProgress();updateProgress();}" style="background:transparent;border:1px solid #e9ecef;color:#9ca3af;border-radius:8px;padding:0.4rem 1rem;cursor:pointer;font-size:0.8rem;">Reset Progress</button>
+    </div>
+  `;
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function copyPrompt(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateProgress();
+</script>
+</body>
+</html>
